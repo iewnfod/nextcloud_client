@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:nextcloud_client/constants.dart';
 import 'package:nextcloud_client/widgets/soft_button.dart';
 
 class UserAccountDisplay extends StatelessWidget {
@@ -30,7 +31,10 @@ class UserAccountDisplay extends StatelessWidget {
                   width: 96,
                   height: 96,
                   child: CircleAvatar(
-                    backgroundImage: CachedNetworkImageProvider(icon!),
+                    backgroundImage: CachedNetworkImageProvider(
+                      icon!,
+                      headers: {"user-agent": USER_AGENT},
+                    ),
                   ),
                 ),
               ),

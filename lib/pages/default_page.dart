@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:nextcloud/nextcloud.dart';
 import 'package:nextcloud/provisioning_api.dart';
 import 'package:nextcloud/user_status.dart';
+import 'package:nextcloud_client/constants.dart';
 import 'package:nextcloud_client/download_manager.dart';
 import 'package:nextcloud_client/widgets/file_tabs.dart';
 import 'package:nextcloud_client/widgets/user_account_display.dart';
@@ -103,6 +104,7 @@ class _DefaultPageState extends State<DefaultPage> {
         backgroundColor: Colors.transparent,
         title: CachedNetworkImage(
           imageUrl: _logo(),
+          httpHeaders: {"user-agent": USER_AGENT},
           errorWidget: (context, url, error) {
             return Text(
               "Nextcloud Client",

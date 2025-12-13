@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:nextcloud/nextcloud.dart';
+import 'package:nextcloud_client/constants.dart';
 import 'package:nextcloud_client/pages/default_page.dart';
 import 'package:nextcloud_client/pages/login_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -82,7 +83,10 @@ class _MyHomePageState extends State<MyHomePage> {
           image: _bg() == null
               ? null
               : DecorationImage(
-                  image: CachedNetworkImageProvider(_bg()!),
+                  image: CachedNetworkImageProvider(
+                    _bg()!,
+                    headers: {'user-agent': USER_AGENT},
+                  ),
                   fit: BoxFit.cover,
                 ),
         ),
