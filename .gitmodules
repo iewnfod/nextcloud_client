@@ -1,0 +1,3 @@
+[submodule "packages/webdav_client"]
+	path = packages/webdav_client
+	url = https://github.com/iewnfod/webdav_client
