@@ -21,8 +21,10 @@ String getDefaultDownloadPath() {
     return "/var/mobile/Containers/Data/Application/Documents";
   } else if (Platform.isWindows) {
     return "${Platform.environment['USERPROFILE']}\\Downloads";
-  } else if (Platform.isLinux || Platform.isMacOS) {
+  } else if (Platform.isLinux) {
     return "${Platform.environment['HOME']}/Downloads";
+  } else if (Platform.isMacOS) {
+    return "/Users/${Platform.environment['USER']}/Downloads";
   } else {
     return ".";
   }

@@ -185,6 +185,7 @@ class DownloadItem {
           davFile.path!,
           savePath,
           onProgress: (count, total) {
+            if (total == -1) return;
             setProgress((count + _receivedBytes) / (total + _receivedBytes));
           },
           cancelToken: _cancelToken,
