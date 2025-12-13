@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
 import 'package:nextcloud/nextcloud.dart';
 import 'package:nextcloud/provisioning_api.dart';
+import 'package:nextcloud_client/http_client.dart';
 import 'package:nextcloud_client/widgets/soft_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:webdav_client/webdav_client.dart';
@@ -57,6 +59,10 @@ class _LoginPageState extends State<LoginPage> {
         Uri.parse(_protocolController.text + _urlController.text),
         loginName: _usernameController.text,
         appPassword: _passwordController.text,
+        httpClient: UserAgentClient(
+          "Nextcloud Client (https://github.com/iewnfod)",
+          http.Client(),
+        ),
       );
 
       final user =
@@ -68,7 +74,10 @@ class _LoginPageState extends State<LoginPage> {
         user: _usernameController.text,
         password: _passwordController.text,
       );
-      davClient.setHeaders({'accept-charset': 'utf-8'});
+      davClient.setHeaders({
+        'accept-charset': 'utf-8',
+        'user-agent': 'Nextcloud Client (https://github.com/iewnfod)',
+      });
       davClient.setConnectTimeout(8000);
       davClient.setSendTimeout(8000);
       await davClient.ping();

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:nextcloud_client/download_manager.dart';
 import 'package:nextcloud_client/utils.dart';
 import 'package:nextcloud_client/widgets/soft_button.dart';
-import 'package:nextcloud_client/widgets/tabs/downloads_tab.dart';
 import 'package:webdav_client/webdav_client.dart';
 
 class DownloadDialog extends StatefulWidget {

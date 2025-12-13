@@ -128,6 +128,8 @@ class DownloadItem {
   final File davFile;
   final String savePath;
   final void Function(DownloadItem, {bool? isProgressUpdate}) onUpdate;
+  final DateTime createdAt = DateTime.now();
+  DateTime updatedAt = DateTime.now();
 
   DownloadStatus status = DownloadStatus.pending;
   double progress = 0;
@@ -141,21 +143,26 @@ class DownloadItem {
     required this.onUpdate,
   });
 
+  void _update({bool isProgressUpdate = false}) {
+    updatedAt = DateTime.now();
+    onUpdate(this, isProgressUpdate: isProgressUpdate);
+  }
+
   void setStatus(DownloadStatus newStatus) {
     status = newStatus;
-    onUpdate(this);
+    _update();
   }
 
   void setProgress(double newProgress) {
     progress = newProgress;
-    onUpdate(this, isProgressUpdate: true);
+    _update(isProgressUpdate: true);
   }
 
   void pause() {
     if (_cancelToken != null && status == .inProgress) {
       _cancelToken!.cancel("Download paused by user");
       setStatus(DownloadStatus.paused);
-      onUpdate(this);
+      _update();
     }
   }
 
@@ -199,5 +206,56 @@ class DownloadItem {
           print("Download error: $e");
         });
     setStatus(.inProgress);
+  }
+}
+
+class PersistentDownloadItem {
+  final String id;
+  final File davFile;
+  final String savePath;
+  final DownloadStatus status;
+  final double progress;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  PersistentDownloadItem({
+    required this.id,
+    required this.davFile,
+    required this.savePath,
+    required this.status,
+    required this.progress,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'davFile': {
+        'path': davFile.path,
+        'name': davFile.name,
+        'size': davFile.size,
+        'etag': davFile.eTag,
+        'mTime': davFile.mTime,
+        'cTime': davFile.cTime,
+      },
+      'savePath': savePath,
+      'status': status.toString().split('.').last,
+      'progress': progress,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+    };
+  }
+
+  factory PersistentDownloadItem.fromDownloadItem(DownloadItem item) {
+    return PersistentDownloadItem(
+      id: item.id,
+      davFile: item.davFile,
+      status: item.status,
+      progress: item.progress,
+      savePath: item.savePath,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+    );
   }
 }
