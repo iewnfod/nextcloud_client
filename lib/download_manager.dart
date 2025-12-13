@@ -24,7 +24,7 @@ class DownloadManager {
     await _lock.synchronized(() {
       _downloads[item.id] = item;
     });
-    immediateUpdate(item);
+    immediateUpdate(item: item);
   }
 
   Future<void> updateDownload(
@@ -34,23 +34,21 @@ class DownloadManager {
     if (isProgressUpdate == true) {
       await _lock.synchronized(() {
         _downloads[item.id] = item;
-        _scheduleUpdate(item.id);
       });
+      _scheduleUpdate(item.id);
     } else {
       await _lock.synchronized(() {
         _downloads[item.id] = item;
       });
-      immediateUpdate(item);
+      immediateUpdate(item: item);
     }
   }
 
   Future<void> removeDownload(String id) async {
-    DownloadItem? item;
     await _lock.synchronized(() {
-      item = _downloads[id];
       _downloads.remove(id);
     });
-    immediateUpdate(item!);
+    immediateUpdate();
   }
 
   Future<List<DownloadItem>> getAllDownloads() async {
@@ -64,8 +62,11 @@ class DownloadManager {
   void _scheduleUpdate(String downloadId) {
     _pendingUpdates.add(downloadId);
 
-    _debounceTimer?.cancel();
+    if (_debounceTimer != null && _debounceTimer!.isActive) {
+      return;
+    }
 
+    _debounceTimer?.cancel();
     _debounceTimer = Timer(_debounceDelay, () {
       _performBatchUpdate();
     });
@@ -88,12 +89,14 @@ class DownloadManager {
     }
   }
 
-  Future<void> immediateUpdate(DownloadItem item) async {
-    await _lock.synchronized(() {
-      _downloads[item.id] = item;
-    });
+  Future<void> immediateUpdate({DownloadItem? item}) async {
+    if (item != null) {
+      await _lock.synchronized(() {
+        _downloads[item.id] = item;
+      });
+    }
     _debounceTimer?.cancel();
-    onBatchUpdate([item]);
+    onBatchUpdate([if (item != null) item]);
   }
 
   void dispose() {
@@ -124,7 +127,7 @@ class DownloadItem {
 
   final File davFile;
   final String savePath;
-  final void Function(DownloadItem) onUpdate;
+  final void Function(DownloadItem, {bool? isProgressUpdate}) onUpdate;
 
   DownloadStatus status = DownloadStatus.pending;
   double progress = 0;
@@ -145,7 +148,7 @@ class DownloadItem {
 
   void setProgress(double newProgress) {
     progress = newProgress;
-    onUpdate(this);
+    onUpdate(this, isProgressUpdate: true);
   }
 
   void pause() {
