@@ -63,12 +63,12 @@ class _DownloadsTabState extends State<DownloadsTab> {
                   ),
                   FutureBuilder(
                     future: widget.dm.countWithStatus(.inProgress),
-                    builder: (context, snapshot) {
+                    builder: (context, inProgressSnapshot) {
                       return FutureBuilder(
                         future: widget.dm.count(),
-                        builder: (context, snapshot) {
+                        builder: (context, totalSnapShot) {
                           return Text(
-                            "${snapshot.data ?? 0}/${snapshot.data ?? 0} in progress",
+                            "${inProgressSnapshot.data ?? 0}/${totalSnapShot.data ?? 0} in progress",
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.grey.shade700,
@@ -171,7 +171,7 @@ class DownloadTab extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      "${capitalize(download.status.toString().split('.').last)}, Progress: ${(download.progress * 100).toStringAsFixed(2)}%",
+                      "${capitalize(download.status.name)}, Progress: ${(download.progress * 100).toStringAsFixed(2)}%",
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey.shade700,

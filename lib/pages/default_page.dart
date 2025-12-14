@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:nextcloud/nextcloud.dart';
@@ -5,6 +7,7 @@ import 'package:nextcloud/provisioning_api.dart';
 import 'package:nextcloud/user_status.dart';
 import 'package:nextcloud_client/constants.dart';
 import 'package:nextcloud_client/download_manager.dart';
+import 'package:nextcloud_client/utils.dart';
 import 'package:nextcloud_client/widgets/file_tabs.dart';
 import 'package:nextcloud_client/widgets/user_account_display.dart';
 import 'package:webdav_client/webdav_client.dart';
@@ -74,18 +77,32 @@ class _DefaultPageState extends State<DefaultPage> {
     }
   }
 
+  void _onBatchUpdate(List<DownloadItem> items) {
+    if (mounted) {
+      setState(() {
+        // trigger UI update
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    _dm = DownloadManager(
-      onBatchUpdate: (items) {
-        if (mounted) {
-          setState(() {
-            // trigger UI update
-          });
+    getStringPref("dm").then((dmJson) {
+      if (dmJson != null) {
+        try {
+          final decodedJson = jsonDecode(dmJson);
+          print("Loading DownloadManager state: $decodedJson");
+          _dm = DownloadManager.fromJson(
+            decodedJson,
+            onBatchUpdate: _onBatchUpdate,
+          );
+        } catch (e) {
+          print("Failed to load DownloadManager state: $e");
         }
-      },
-    );
+      }
+    });
+    _dm = DownloadManager(onBatchUpdate: _onBatchUpdate);
     _fetchData();
   }
 

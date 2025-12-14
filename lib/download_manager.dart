@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -12,7 +13,9 @@ class DownloadManager {
   final Lock _lock = Lock();
 
   Timer? _debounceTimer;
+  Timer? _saveTimer;
   final Duration _debounceDelay = const Duration(milliseconds: 100);
+  final Duration _saveDelay = const Duration(seconds: 2);
   final Set<String> _pendingUpdates = HashSet();
   final List<DownloadItem> _batchUpdates = [];
 
@@ -72,6 +75,23 @@ class DownloadManager {
     });
   }
 
+  void _scheduleSave() {
+    if (_saveTimer != null && _saveTimer!.isActive) {
+      return;
+    }
+
+    _saveTimer?.cancel();
+    _saveTimer = Timer(_saveDelay, () {
+      _performSave();
+    });
+  }
+
+  Future<void> _performSave() async {
+    final json = await toJson();
+    print("Saving DownloadManager state...");
+    setStringPref("dm", jsonEncode(json));
+  }
+
   Future<void> _performBatchUpdate() async {
     await _lock.synchronized(() {
       _batchUpdates.clear();
@@ -87,6 +107,8 @@ class DownloadManager {
     if (_batchUpdates.isNotEmpty) {
       onBatchUpdate(List.from(_batchUpdates));
     }
+
+    _scheduleSave();
   }
 
   Future<void> immediateUpdate({DownloadItem? item}) async {
@@ -97,9 +119,11 @@ class DownloadManager {
     }
     _debounceTimer?.cancel();
     onBatchUpdate([if (item != null) item]);
+    _scheduleSave();
   }
 
   void dispose() {
+    _performSave();
     _debounceTimer?.cancel();
   }
 
@@ -118,18 +142,43 @@ class DownloadManager {
   Future<int> count() async {
     return await _lock.synchronized(() => _downloads.length);
   }
+
+  Future<Map<String, dynamic>> toJson() async {
+    Map<String, dynamic> json = {};
+    await _lock.synchronized(() {
+      json['downloads'] = _downloads.values
+          .map((download) => download.toJson())
+          .toList();
+    });
+    return json;
+  }
+
+  DownloadManager.fromJson(
+    Map<String, dynamic> json, {
+    required this.onBatchUpdate,
+  }) {
+    if (json['downloads'] != null && json['downloads'] is List) {
+      for (var itemJson in json['downloads']) {
+        final item = DownloadItem.fromJson(
+          itemJson as Map<String, dynamic>,
+          onUpdate: updateDownload,
+        );
+        _downloads[item.id] = item;
+      }
+    }
+  }
 }
 
 enum DownloadStatus { pending, inProgress, completed, failed, paused }
 
 class DownloadItem {
-  final String id = UniqueKey().toString();
+  final String id;
 
   final File davFile;
   final String savePath;
   final void Function(DownloadItem, {bool? isProgressUpdate}) onUpdate;
-  final DateTime createdAt = DateTime.now();
-  DateTime updatedAt = DateTime.now();
+  DateTime createdAt;
+  DateTime updatedAt;
 
   DownloadStatus status = DownloadStatus.pending;
   double progress = 0;
@@ -141,7 +190,52 @@ class DownloadItem {
     required this.davFile,
     required this.savePath,
     required this.onUpdate,
-  });
+  }) : id = UniqueKey().toString(),
+       createdAt = DateTime.now(),
+       updatedAt = DateTime.now();
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'davFile': {
+        'cTime': davFile.cTime?.toIso8601String(),
+        'eTag': davFile.eTag,
+        'name': davFile.name,
+        'path': davFile.path,
+        'size': davFile.size,
+        'isDir': davFile.isDir,
+        'mTime': davFile.mTime?.toIso8601String(),
+        'mimeType': davFile.mimeType,
+      },
+      'savePath': savePath,
+      'status': status.name,
+      'progress': progress,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+    };
+  }
+
+  DownloadItem.fromJson(Map<String, dynamic> json, {required this.onUpdate})
+    : davFile = File(
+        cTime: json['davFile']['cTime'] != null
+            ? DateTime.parse(json['davFile']['cTime'] as String)
+            : null,
+        eTag: json['davFile']['eTag'] as String?,
+        name: json['davFile']['name'] as String?,
+        path: json['davFile']['path'] as String?,
+        size: json['davFile']['size'] as int?,
+        isDir: json['davFile']['isDir'] as bool?,
+        mTime: json['davFile']['mTime'] != null
+            ? DateTime.parse(json['davFile']['mTime'] as String)
+            : null,
+        mimeType: json['davFile']['mimeType'] as String?,
+      ),
+      id = json['id'] as String,
+      savePath = json['savePath'] as String,
+      status = getDownloadStatusFromString(json['status'] as String),
+      progress = (json['progress'] as num).toDouble(),
+      createdAt = DateTime.parse(json['createdAt'] as String),
+      updatedAt = DateTime.parse(json['updatedAt'] as String);
 
   void _update({bool isProgressUpdate = false}) {
     updatedAt = DateTime.now();
@@ -210,53 +304,20 @@ class DownloadItem {
   }
 }
 
-class PersistentDownloadItem {
-  final String id;
-  final File davFile;
-  final String savePath;
-  final DownloadStatus status;
-  final double progress;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-
-  PersistentDownloadItem({
-    required this.id,
-    required this.davFile,
-    required this.savePath,
-    required this.status,
-    required this.progress,
-    required this.createdAt,
-    required this.updatedAt,
-  });
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'davFile': {
-        'path': davFile.path,
-        'name': davFile.name,
-        'size': davFile.size,
-        'etag': davFile.eTag,
-        'mTime': davFile.mTime,
-        'cTime': davFile.cTime,
-      },
-      'savePath': savePath,
-      'status': status.toString().split('.').last,
-      'progress': progress,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
-    };
-  }
-
-  factory PersistentDownloadItem.fromDownloadItem(DownloadItem item) {
-    return PersistentDownloadItem(
-      id: item.id,
-      davFile: item.davFile,
-      status: item.status,
-      progress: item.progress,
-      savePath: item.savePath,
-      createdAt: item.createdAt,
-      updatedAt: item.updatedAt,
-    );
+DownloadStatus getDownloadStatusFromString(String status) {
+  status = status.trim().toLowerCase();
+  switch (status) {
+    case 'pending':
+      return DownloadStatus.pending;
+    case 'inProgress':
+      return DownloadStatus.inProgress;
+    case 'completed':
+      return DownloadStatus.completed;
+    case 'failed':
+      return DownloadStatus.failed;
+    case 'paused':
+      return DownloadStatus.paused;
+    default:
+      return DownloadStatus.pending;
   }
 }
