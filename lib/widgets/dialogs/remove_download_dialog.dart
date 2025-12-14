@@ -60,14 +60,30 @@ class _RemoveDownloadDialogState extends State<RemoveDownloadDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text("Remove Download"),
+      constraints: BoxConstraints(
+        maxWidth: MediaQuery.of(context).size.width * 0.75,
+      ),
+      title: Column(
+        crossAxisAlignment: .start,
+        children: [
+          Text("Remove Download"),
+          Text(
+            widget.file.name ?? "",
+            overflow: .ellipsis,
+            maxLines: 1,
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
+          ),
+        ],
+      ),
       content: Container(
         constraints: BoxConstraints(minHeight: 150.0),
         height: MediaQuery.of(context).size.height * 0.15,
         child: Column(
+          mainAxisAlignment: .start,
+          crossAxisAlignment: .start,
           children: [
             Text(
-              "Are you sure you want to remove the download for ${widget.file.name}?",
+              "Are you sure you want to remove the download?",
               maxLines: 3,
               overflow: .ellipsis,
             ),

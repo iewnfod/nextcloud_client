@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:file_picker/file_picker.dart';
@@ -49,7 +50,8 @@ class _DownloadDialogState extends State<DownloadDialog> {
       _isLoading = true;
     });
 
-    String savePathBase = '$_downloadPath/${widget.file.name!}';
+    String savePathBase =
+        '$_downloadPath${Platform.pathSeparator}${widget.file.name!}';
     int offset = 0;
     String savePath = savePathBase;
     while (fileExists(savePath)) {

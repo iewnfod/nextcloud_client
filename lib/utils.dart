@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:open_file/open_file.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 String calcSize(int size) {
@@ -100,5 +101,19 @@ String formatSpeed(double speed) {
     return "${(speed / (1024 * 1024)).toStringAsFixed(2)} MB/s";
   } else {
     return "${(speed / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB/s";
+  }
+}
+
+String getFileName(String path) {
+  return File(path).uri.pathSegments.last;
+}
+
+void openFolderAndHighlight(String path) {
+  if (Platform.isWindows) {
+    Process.run('explorer.exe', ['/select,', path]);
+  } else if (Platform.isMacOS) {
+    Process.run('open', ['-R', path]);
+  } else {
+    OpenFile.open(Directory(path).parent.path);
   }
 }

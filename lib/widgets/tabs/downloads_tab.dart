@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:nextcloud_client/download_manager.dart';
 import 'package:nextcloud_client/utils.dart';
 import 'package:nextcloud_client/widgets/dialogs/remove_download_dialog.dart';
+import 'package:open_file/open_file.dart';
 import 'package:webdav_client/webdav_client.dart';
 
 class DownloadsTab extends StatefulWidget {
@@ -165,10 +166,15 @@ class DownloadTab extends StatelessWidget {
                   children: [
                     SizedBox(
                       width: MediaQuery.of(context).size.width * 0.5,
-                      child: Text(
-                        download.davFile.name ?? "Unknown",
-                        overflow: .ellipsis,
-                        style: TextStyle(fontSize: 16, fontWeight: .bold),
+                      child: Column(
+                        crossAxisAlignment: .start,
+                        children: [
+                          Text(
+                            getFileName(download.savePath),
+                            overflow: .ellipsis,
+                            style: TextStyle(fontSize: 16, fontWeight: .bold),
+                          ),
+                        ],
                       ),
                     ),
                     Row(
@@ -222,6 +228,23 @@ class DownloadTab extends StatelessWidget {
                               download.pause();
                             },
                             icon: Icon(Icons.pause),
+                          )
+                        : download.status == .completed
+                        ? Row(
+                            children: [
+                              IconButton(
+                                onPressed: () {
+                                  OpenFile.open(download.savePath);
+                                },
+                                icon: Icon(Icons.file_open_outlined),
+                              ),
+                              IconButton(
+                                onPressed: () {
+                                  openFolderAndHighlight(download.savePath);
+                                },
+                                icon: Icon(Icons.folder_open),
+                              ),
+                            ],
                           )
                         : SizedBox.shrink(),
                     IconButton(
