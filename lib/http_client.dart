@@ -8,7 +8,7 @@ class UserAgentClient extends http.BaseClient {
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) {
-    request.headers['user-agent'] = userAgent;
+    request.headers['User-Agent'] = userAgent;
     return _inner.send(request);
   }
 }

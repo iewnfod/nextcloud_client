@@ -121,7 +121,7 @@ class _DefaultPageState extends State<DefaultPage> {
         backgroundColor: Colors.transparent,
         title: CachedNetworkImage(
           imageUrl: _logo(),
-          httpHeaders: {"user-agent": USER_AGENT},
+          httpHeaders: {"User-Agent": USER_AGENT},
           errorWidget: (context, url, error) {
             return Text(
               "Nextcloud Client",
@@ -181,8 +181,9 @@ class _DefaultPageState extends State<DefaultPage> {
       endDrawer: Drawer(
         child: Padding(
           padding: EdgeInsets.all(16.0),
-          child: Flex(
-            direction: .vertical,
+          child: Column(
+            mainAxisAlignment: .center,
+            crossAxisAlignment: .center,
             children: [
               UserAccountDisplay(
                 displayName: _user?.displayName,
@@ -194,7 +195,19 @@ class _DefaultPageState extends State<DefaultPage> {
               Expanded(
                 child: Column(
                   mainAxisAlignment: .end,
-                  children: [Text(widget.client.baseURL.host)],
+                  spacing: 5.0,
+                  children: [
+                    Text(
+                      "Server: ${widget.client.baseURL.origin}",
+                      style: TextStyle(color: Colors.grey.shade600),
+                      textAlign: .center,
+                    ),
+                    Text(
+                      "User Agent: $USER_AGENT",
+                      style: TextStyle(color: Colors.grey.shade600),
+                      textAlign: .center,
+                    ),
+                  ],
                 ),
               ),
             ],

@@ -85,7 +85,7 @@ class _MyHomePageState extends State<MyHomePage> {
               : DecorationImage(
                   image: CachedNetworkImageProvider(
                     _bg()!,
-                    headers: {'user-agent': USER_AGENT},
+                    headers: {'User-Agent': USER_AGENT},
                   ),
                   fit: BoxFit.cover,
                 ),

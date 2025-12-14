@@ -33,7 +33,7 @@ class UserAccountDisplay extends StatelessWidget {
                   child: CircleAvatar(
                     backgroundImage: CachedNetworkImageProvider(
                       icon!,
-                      headers: {"user-agent": USER_AGENT},
+                      headers: {"User-Agent": USER_AGENT},
                     ),
                   ),
                 ),

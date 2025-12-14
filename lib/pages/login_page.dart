@@ -74,7 +74,7 @@ class _LoginPageState extends State<LoginPage> {
       );
       davClient.setHeaders({
         'accept-charset': 'utf-8',
-        'user-agent': USER_AGENT,
+        'User-Agent': USER_AGENT,
       });
       davClient.setConnectTimeout(8000);
       davClient.setSendTimeout(8000);
