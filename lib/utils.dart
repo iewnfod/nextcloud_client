@@ -82,3 +82,23 @@ int getFileSize(String path) {
   final file = File(path);
   return file.lengthSync();
 }
+
+Future<void> deleteFile(String path) async {
+  print("Deleting file at $path");
+  final file = File(path);
+  if (file.existsSync()) {
+    await file.delete();
+  }
+}
+
+String formatSpeed(double speed) {
+  if (speed < 1024) {
+    return "${speed.toStringAsFixed(2)} B/s";
+  } else if (speed < 1024 * 1024) {
+    return "${(speed / 1024).toStringAsFixed(2)} KB/s";
+  } else if (speed < 1024 * 1024 * 1024) {
+    return "${(speed / (1024 * 1024)).toStringAsFixed(2)} MB/s";
+  } else {
+    return "${(speed / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB/s";
+  }
+}

@@ -182,6 +182,8 @@ class DownloadItem {
 
   DownloadStatus status = DownloadStatus.pending;
   double progress = 0;
+  double speed = 0;
+  DateTime? startedAt;
 
   CancelToken? _cancelToken;
   int _receivedBytes = 0;
@@ -247,8 +249,15 @@ class DownloadItem {
     _update();
   }
 
-  void setProgress(double newProgress) {
+  void setProgress(int count, int total) {
+    double newProgress = total > 0 ? count / total : 0;
     progress = newProgress;
+    if (startedAt != null) {
+      final passedTime = DateTime.now().difference(startedAt!).inMilliseconds;
+      if (count > 0 && passedTime > 0) {
+        speed = count / (passedTime / 1000);
+      }
+    }
     _update(isProgressUpdate: true);
   }
 
@@ -278,10 +287,7 @@ class DownloadItem {
         .read2File(
           davFile.path!,
           savePath,
-          onProgress: (count, total) {
-            if (total == -1) return;
-            setProgress((count + _receivedBytes) / (total + _receivedBytes));
-          },
+          onProgress: setProgress,
           cancelToken: _cancelToken,
           options: Options(
             headers: {
@@ -300,6 +306,8 @@ class DownloadItem {
           setStatus(.failed);
           print("Download error: $e");
         });
+
+    startedAt = DateTime.now();
     setStatus(.inProgress);
   }
 }

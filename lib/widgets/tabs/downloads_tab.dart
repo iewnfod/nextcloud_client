@@ -24,6 +24,7 @@ class _DownloadsTabState extends State<DownloadsTab> {
             _cancelAction(item);
           },
           file: item.davFile,
+          savePath: item.savePath,
         );
       },
     );
@@ -170,12 +171,33 @@ class DownloadTab extends StatelessWidget {
                         style: TextStyle(fontSize: 16, fontWeight: .bold),
                       ),
                     ),
-                    Text(
-                      "${capitalize(download.status.name)}, Progress: ${(download.progress * 100).toStringAsFixed(2)}%",
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade700,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          capitalize(download.status.name),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                        if (download.status == .inProgress &&
+                            download.progress > 0)
+                          Text(
+                            " - Progress: ${(download.progress * 100).toStringAsFixed(2)}%",
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade700,
+                            ),
+                          ),
+                        if (download.status == .inProgress)
+                          Text(
+                            " - Speed: ${formatSpeed(download.speed)}",
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade700,
+                            ),
+                          ),
+                      ],
                     ),
                   ],
                 ),
