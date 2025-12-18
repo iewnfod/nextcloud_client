@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:nextcloud_client/upload_manager.dart';
+import 'package:nextcloud_client/managers/upload_manager.dart';
 import 'package:nextcloud_client/utils.dart';
 import 'package:webdav_client/webdav_client.dart';
 

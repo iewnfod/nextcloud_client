@@ -3,7 +3,7 @@ import 'dart:ui';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:nextcloud_client/download_manager.dart';
+import 'package:nextcloud_client/managers/download_manager.dart';
 import 'package:nextcloud_client/utils.dart';
 import 'package:nextcloud_client/widgets/soft_button.dart';
 import 'package:webdav_client/webdav_client.dart';

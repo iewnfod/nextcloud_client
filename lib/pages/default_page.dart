@@ -6,8 +6,9 @@ import 'package:nextcloud/nextcloud.dart';
 import 'package:nextcloud/provisioning_api.dart';
 import 'package:nextcloud/user_status.dart';
 import 'package:nextcloud_client/constants.dart';
-import 'package:nextcloud_client/download_manager.dart';
-import 'package:nextcloud_client/upload_manager.dart';
+import 'package:nextcloud_client/managers/download_manager.dart';
+import 'package:nextcloud_client/managers/file_manager.dart';
+import 'package:nextcloud_client/managers/upload_manager.dart';
 import 'package:nextcloud_client/utils.dart';
 import 'package:nextcloud_client/widgets/file_tabs.dart';
 import 'package:nextcloud_client/widgets/user_account_display.dart';
@@ -35,15 +36,9 @@ class _DefaultPageState extends State<DefaultPage> {
   String? _status;
   bool _isLoading = true;
   String _errorMessage = '';
-  List<String> path = [""];
+  late FileManager _fm;
   late DownloadManager _dm;
   late UploadManager _um;
-
-  void _updatePath(List<String> newPath) {
-    setState(() {
-      path = newPath;
-    });
-  }
 
   String? _icon(int size) {
     if (_iconBase == null) return null;
@@ -95,6 +90,14 @@ class _DefaultPageState extends State<DefaultPage> {
     }
   }
 
+  void _onFUpdate() {
+    if (mounted) {
+      setState(() {
+        // trigger UI update
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -128,6 +131,11 @@ class _DefaultPageState extends State<DefaultPage> {
     });
     _dm = DownloadManager(onBatchUpdate: _onDBatchUpdate);
     _um = UploadManager(onBatchUpdate: _onUBatchUpdate);
+    _fm = FileManager(
+      client: widget.client,
+      davClient: widget.davClient,
+      onUpdate: _onFUpdate,
+    );
     _fetchData();
   }
 
@@ -198,10 +206,9 @@ class _DefaultPageState extends State<DefaultPage> {
                 child: FileTabs(
                   client: widget.client,
                   davClient: widget.davClient,
-                  path: path,
-                  updatePath: _updatePath,
                   dm: _dm,
                   um: _um,
+                  fm: _fm,
                 ),
               ),
       ),

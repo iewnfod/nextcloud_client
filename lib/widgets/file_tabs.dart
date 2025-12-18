@@ -2,8 +2,9 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:nextcloud/nextcloud.dart';
-import 'package:nextcloud_client/download_manager.dart';
-import 'package:nextcloud_client/upload_manager.dart';
+import 'package:nextcloud_client/managers/download_manager.dart';
+import 'package:nextcloud_client/managers/file_manager.dart';
+import 'package:nextcloud_client/managers/upload_manager.dart';
 import 'package:nextcloud_client/widgets/soft_button.dart';
 import 'package:nextcloud_client/widgets/tabs/all_files_tab.dart';
 import 'package:nextcloud_client/widgets/tabs/downloads_tab.dart';
@@ -13,19 +14,17 @@ import 'package:webdav_client/webdav_client.dart';
 class FileTabs extends StatefulWidget {
   final NextcloudClient client;
   final Client davClient;
-  final List<String> path;
-  final void Function(List<String>) updatePath;
   final DownloadManager dm;
   final UploadManager um;
+  final FileManager fm;
 
   const FileTabs({
     super.key,
     required this.client,
     required this.davClient,
-    required this.path,
-    required this.updatePath,
     required this.dm,
     required this.um,
+    required this.fm,
   });
 
   @override
@@ -184,8 +183,7 @@ class _FileTabsState extends State<FileTabs> {
                         davClient: widget.davClient,
                         dm: widget.dm,
                         um: widget.um,
-                        path: widget.path,
-                        updatePath: widget.updatePath,
+                        fm: widget.fm,
                       )
                     : _currentTab == "downloads"
                     ? DownloadsTab(davClient: widget.davClient, dm: widget.dm)

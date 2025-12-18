@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:nextcloud_client/download_manager.dart';
+import 'package:nextcloud_client/managers/download_manager.dart';
 import 'package:nextcloud_client/utils.dart';
 import 'package:nextcloud_client/widgets/dialogs/remove_download_dialog.dart';
 import 'package:open_file/open_file.dart';
