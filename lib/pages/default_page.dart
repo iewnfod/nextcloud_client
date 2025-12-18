@@ -7,6 +7,7 @@ import 'package:nextcloud/provisioning_api.dart';
 import 'package:nextcloud/user_status.dart';
 import 'package:nextcloud_client/constants.dart';
 import 'package:nextcloud_client/download_manager.dart';
+import 'package:nextcloud_client/upload_manager.dart';
 import 'package:nextcloud_client/utils.dart';
 import 'package:nextcloud_client/widgets/file_tabs.dart';
 import 'package:nextcloud_client/widgets/user_account_display.dart';
@@ -36,6 +37,7 @@ class _DefaultPageState extends State<DefaultPage> {
   String _errorMessage = '';
   List<String> path = [""];
   late DownloadManager _dm;
+  late UploadManager _um;
 
   void _updatePath(List<String> newPath) {
     setState(() {
@@ -77,7 +79,15 @@ class _DefaultPageState extends State<DefaultPage> {
     }
   }
 
-  void _onBatchUpdate(List<DownloadItem> items) {
+  void _onDBatchUpdate(List<DownloadItem> items) {
+    if (mounted) {
+      setState(() {
+        // trigger UI update
+      });
+    }
+  }
+
+  void _onUBatchUpdate(List<UploadItem> items) {
     if (mounted) {
       setState(() {
         // trigger UI update
@@ -95,20 +105,36 @@ class _DefaultPageState extends State<DefaultPage> {
           print("Loading DownloadManager state: $decodedJson");
           _dm = DownloadManager.fromJson(
             decodedJson,
-            onBatchUpdate: _onBatchUpdate,
+            onBatchUpdate: _onDBatchUpdate,
           );
         } catch (e) {
           print("Failed to load DownloadManager state: $e");
         }
       }
     });
-    _dm = DownloadManager(onBatchUpdate: _onBatchUpdate);
+    getStringPref("um").then((umJson) {
+      if (umJson != null) {
+        try {
+          final decodedJson = jsonDecode(umJson);
+          print("Loading UploadManager state: $decodedJson");
+          _um = UploadManager.fromJson(
+            decodedJson,
+            onBatchUpdate: _onUBatchUpdate,
+          );
+        } catch (e) {
+          print("Failed to load UploadManager state: $e");
+        }
+      }
+    });
+    _dm = DownloadManager(onBatchUpdate: _onDBatchUpdate);
+    _um = UploadManager(onBatchUpdate: _onUBatchUpdate);
     _fetchData();
   }
 
   @override
   void dispose() {
     _dm.dispose();
+    _um.dispose();
     super.dispose();
   }
 
@@ -175,6 +201,7 @@ class _DefaultPageState extends State<DefaultPage> {
                   path: path,
                   updatePath: _updatePath,
                   dm: _dm,
+                  um: _um,
                 ),
               ),
       ),

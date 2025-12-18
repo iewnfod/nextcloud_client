@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -8,6 +9,7 @@ import 'package:nextcloud_client/constants.dart';
 import 'package:nextcloud_client/http_client.dart';
 import 'package:nextcloud_client/widgets/soft_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:webdav_client/webdav_client.dart';
 
 class LoginPage extends StatefulWidget {
@@ -252,6 +254,35 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                       ),
+              ),
+              Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(text: "Do not have nextcloud server?"),
+                    TextSpan(text: " "),
+                    TextSpan(text: "Click "),
+                    TextSpan(
+                      text: "here",
+                      style: TextStyle(
+                        decoration: TextDecoration.underline,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () {
+                          launchUrl(
+                            Uri.parse(
+                              "https://apps.nextcloud.com/apps/nextcloud_all_in_one",
+                            ),
+                          ).catchError((e) {
+                            print("Could not launch URL: $e");
+                            return true;
+                          });
+                        },
+                    ),
+                    TextSpan(text: " to learn how to create your own!"),
+                  ],
+                ),
+                textAlign: .center,
               ),
             ],
           ),

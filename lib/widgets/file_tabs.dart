@@ -3,9 +3,11 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:nextcloud/nextcloud.dart';
 import 'package:nextcloud_client/download_manager.dart';
+import 'package:nextcloud_client/upload_manager.dart';
 import 'package:nextcloud_client/widgets/soft_button.dart';
 import 'package:nextcloud_client/widgets/tabs/all_files_tab.dart';
 import 'package:nextcloud_client/widgets/tabs/downloads_tab.dart';
+import 'package:nextcloud_client/widgets/tabs/uploads_tab.dart';
 import 'package:webdav_client/webdav_client.dart';
 
 class FileTabs extends StatefulWidget {
@@ -14,6 +16,7 @@ class FileTabs extends StatefulWidget {
   final List<String> path;
   final void Function(List<String>) updatePath;
   final DownloadManager dm;
+  final UploadManager um;
 
   const FileTabs({
     super.key,
@@ -22,6 +25,7 @@ class FileTabs extends StatefulWidget {
     required this.path,
     required this.updatePath,
     required this.dm,
+    required this.um,
   });
 
   @override
@@ -32,6 +36,7 @@ class _FileTabsState extends State<FileTabs> {
   static const items = [
     {"icon": Icons.folder_copy_outlined, "label": "Files", "tab": "files"},
     {"icon": Icons.download, "label": "Downloads", "tab": "downloads"},
+    {"icon": Icons.upload, "label": "Uploads", "tab": "uploads"},
     {"icon": Icons.sync, "label": "Sync", "tab": "sync"},
   ];
 
@@ -123,7 +128,45 @@ class _FileTabsState extends State<FileTabs> {
                                     SizedBox(width: 10),
                                     Transform.translate(
                                       offset: Offset(0, -1),
-                                      child: Text(item["label"] as String),
+                                      child: item["label"] == "Downloads"
+                                          ? FutureBuilder(
+                                              future: widget.dm.countWithStatus(
+                                                .inProgress,
+                                              ),
+                                              builder: (context, snapshot) {
+                                                final count =
+                                                    snapshot.data ?? 0;
+                                                if (count == 0) {
+                                                  return Text(
+                                                    item["label"] as String,
+                                                  );
+                                                } else {
+                                                  return Text(
+                                                    "${item["label"]} ($count)",
+                                                  );
+                                                }
+                                              },
+                                            )
+                                          : item["label"] == "Uploads"
+                                          ? FutureBuilder(
+                                              future: widget.um.countWithStatus(
+                                                .inProgress,
+                                              ),
+                                              builder: (context, snapshot) {
+                                                final count =
+                                                    snapshot.data ?? 0;
+                                                if (count == 0) {
+                                                  return Text(
+                                                    item["label"] as String,
+                                                  );
+                                                } else {
+                                                  return Text(
+                                                    "${item["label"]} ($count)",
+                                                  );
+                                                }
+                                              },
+                                            )
+                                          : Text(item["label"] as String),
                                     ),
                                   ],
                                 ),
@@ -140,11 +183,14 @@ class _FileTabsState extends State<FileTabs> {
                         client: widget.client,
                         davClient: widget.davClient,
                         dm: widget.dm,
+                        um: widget.um,
                         path: widget.path,
                         updatePath: widget.updatePath,
                       )
                     : _currentTab == "downloads"
                     ? DownloadsTab(davClient: widget.davClient, dm: widget.dm)
+                    : _currentTab == "uploads"
+                    ? UploadsTab(davClient: widget.davClient, um: widget.um)
                     : Expanded(
                         child: Center(child: Text("Tab not implemented yet.")),
                       ),

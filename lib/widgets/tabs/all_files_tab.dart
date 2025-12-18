@@ -1,9 +1,13 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:nextcloud/core.dart';
 import 'package:nextcloud/nextcloud.dart';
 import 'package:nextcloud_client/download_manager.dart';
+import 'package:nextcloud_client/upload_manager.dart';
 import 'package:nextcloud_client/utils.dart';
+import 'package:nextcloud_client/widgets/dialogs/delete_dialog.dart';
 import 'package:nextcloud_client/widgets/dialogs/download_dialog.dart';
+import 'package:nextcloud_client/widgets/dialogs/new_folder_dialog.dart';
 import 'package:nextcloud_client/widgets/soft_button.dart';
 import 'package:webdav_client/webdav_client.dart';
 
@@ -11,6 +15,7 @@ class AllFilesTab extends StatefulWidget {
   final NextcloudClient client;
   final Client davClient;
   final DownloadManager dm;
+  final UploadManager um;
   final List<String> path;
   final void Function(List<String>) updatePath;
 
@@ -19,6 +24,7 @@ class AllFilesTab extends StatefulWidget {
     required this.client,
     required this.davClient,
     required this.dm,
+    required this.um,
     required this.path,
     required this.updatePath,
   });
@@ -143,6 +149,71 @@ class _AllFilesTabState extends State<AllFilesTab> {
     );
   }
 
+  void _newFolder() {
+    print("Creating new folder");
+    showDialog(
+      context: context,
+      builder: (context) {
+        return NewFolderDialog(
+          onCreate: (n) {
+            widget.davClient
+                .mkdir(_path2String([...widget.path, n]))
+                .then((_) {
+                  _updateFolderTree(widget.path);
+                })
+                .catchError((e) {
+                  print("Error creating folder: $e");
+                });
+          },
+        );
+      },
+    );
+  }
+
+  void _delete(File f) {
+    print("Deleting file/folder: ${f.name!}");
+    showDialog(
+      context: context,
+      builder: (context) {
+        return DeleteDialog(
+          onRemove: () {
+            widget.davClient
+                .removeAll(f.path!)
+                .then((_) {
+                  _updateFolderTree(widget.path);
+                })
+                .catchError((e) {
+                  print("Error deleting file/folder: $e");
+                });
+          },
+          file: f,
+        );
+      },
+    );
+  }
+
+  void _upload() {
+    FilePicker.platform.pickFiles(allowMultiple: true).then((f) {
+      f?.files.forEach((file) {
+        if (file.path != null) {
+          if (!fileExists(file.path!)) {
+            return;
+          }
+          if (isFolder(file.path!)) {
+            return;
+          }
+          final item = UploadItem(
+            localPath: file.path!,
+            remotePath: _path2String([...widget.path, file.name]),
+            onUpdate: widget.um.updateUpload,
+          );
+          widget.um.addUpload(item);
+          item.start(widget.davClient);
+        }
+      });
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -186,23 +257,50 @@ class _AllFilesTabState extends State<AllFilesTab> {
                     );
                   }).toList(),
                 ),
-                SoftButton(
-                  onPressed: () {},
-                  style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.all(.circular(8.0)),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.add),
-                      SizedBox(width: 5),
-                      Transform.translate(
-                        offset: Offset(0, -2),
-                        child: Text("New"),
+                Row(
+                  spacing: 8.0,
+                  children: [
+                    SoftButton(
+                      onPressed: () {
+                        _newFolder();
+                      },
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(.circular(8.0)),
+                        ),
                       ),
-                    ],
-                  ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.add),
+                          SizedBox(width: 5),
+                          Transform.translate(
+                            offset: Offset(0, -2),
+                            child: Text("New Folder"),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SoftButton(
+                      onPressed: () {
+                        _upload();
+                      },
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(.circular(8.0)),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.upload),
+                          SizedBox(width: 5),
+                          Transform.translate(
+                            offset: Offset(0, -2),
+                            child: Text("Upload"),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -224,6 +322,7 @@ class _AllFilesTabState extends State<AllFilesTab> {
                       padding: EdgeInsets.all(8.0),
                       child: Row(
                         mainAxisAlignment: .spaceBetween,
+                        spacing: 16.0,
                         children: [
                           Expanded(
                             child: Row(
@@ -245,6 +344,7 @@ class _AllFilesTabState extends State<AllFilesTab> {
                             ),
                           ),
                           Text("Size"),
+                          SizedBox(width: 40),
                         ],
                       ),
                     ),
@@ -279,6 +379,7 @@ class _AllFilesTabState extends State<AllFilesTab> {
                                     padding: EdgeInsets.all(8.0),
                                     child: Row(
                                       mainAxisAlignment: .spaceBetween,
+                                      spacing: 16.0,
                                       children: [
                                         Expanded(
                                           child: Row(
@@ -341,6 +442,15 @@ class _AllFilesTabState extends State<AllFilesTab> {
                                               : calcSize(v.size ?? 0),
                                           style: const TextStyle(
                                             color: Colors.grey,
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          width: 40,
+                                          child: IconButton(
+                                            onPressed: () {
+                                              _delete(v);
+                                            },
+                                            icon: Icon(Icons.delete),
                                           ),
                                         ),
                                       ],

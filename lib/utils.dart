@@ -117,3 +117,8 @@ void openFolderAndHighlight(String path) {
     OpenFile.open(Directory(path).parent.path);
   }
 }
+
+bool isFolder(String path) {
+  final entity = FileSystemEntity.typeSync(path);
+  return entity == .directory;
+}

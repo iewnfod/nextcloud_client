@@ -263,7 +263,7 @@ class DownloadItem {
 
   void pause() {
     if (_cancelToken != null && status == .inProgress) {
-      _cancelToken!.cancel("Download paused by user");
+      _cancelToken!.cancel("Download $id paused by user");
       setStatus(DownloadStatus.paused);
       _update();
     }
@@ -271,7 +271,7 @@ class DownloadItem {
 
   void start(Client davClient) {
     if (status != DownloadStatus.pending) {
-      print("Download already started");
+      print("Download $id already started");
     }
     if (davFile.path == null) {
       print("Invalid DAV file path");
@@ -317,7 +317,7 @@ DownloadStatus getDownloadStatusFromString(String status) {
   switch (status) {
     case 'pending':
       return DownloadStatus.pending;
-    case 'inProgress':
+    case 'inprogress':
       return DownloadStatus.inProgress;
     case 'completed':
       return DownloadStatus.completed;
