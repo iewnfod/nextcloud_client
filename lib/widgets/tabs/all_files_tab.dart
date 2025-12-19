@@ -114,7 +114,7 @@ class _AllFilesTabState extends State<AllFilesTab> {
   @override
   void initState() {
     super.initState();
-    widget.fm.fetchFolderTree(widget.fm.getPathString());
+    widget.fm.fetchFolderTree(widget.fm.getPathString(), depth: 2);
   }
 
   @override

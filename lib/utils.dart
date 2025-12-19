@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:open_file/open_file.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:webdav_client/webdav_client.dart' as wd;
 
 String calcSize(int size) {
   if (size < 1024) {
@@ -121,4 +122,34 @@ void openFolderAndHighlight(String path) {
 bool isFolder(String path) {
   final entity = FileSystemEntity.typeSync(path);
   return entity == .directory;
+}
+
+Map<String, dynamic> davFile2Json(wd.File davFile) {
+  return {
+    'cTime': davFile.cTime?.toIso8601String(),
+    'eTag': davFile.eTag,
+    'name': davFile.name,
+    'path': davFile.path,
+    'size': davFile.size,
+    'isDir': davFile.isDir,
+    'mTime': davFile.mTime?.toIso8601String(),
+    'mimeType': davFile.mimeType,
+  };
+}
+
+wd.File json2DavFile(Map<String, dynamic> json) {
+  return wd.File(
+    cTime: json['cTime'] != null
+        ? DateTime.parse(json['cTime'] as String)
+        : null,
+    eTag: json['eTag'] as String?,
+    name: json['name'] as String?,
+    path: json['path'] as String?,
+    size: json['size'] as int?,
+    isDir: json['isDir'] as bool?,
+    mTime: json['mTime'] != null
+        ? DateTime.parse(json['mTime'] as String)
+        : null,
+    mimeType: json['mimeType'] as String?,
+  );
 }

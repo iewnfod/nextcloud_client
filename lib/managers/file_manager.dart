@@ -1,6 +1,10 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/widgets.dart';
 import 'package:nextcloud/core.dart';
 import 'package:nextcloud/nextcloud.dart';
+import 'package:nextcloud_client/utils.dart';
 import 'package:webdav_client/webdav_client.dart';
 
 class FileManager {
@@ -11,11 +15,25 @@ class FileManager {
   NextcloudClient client;
   Function onUpdate;
 
+  Timer? _saveTimer;
+  final Duration _saveDelay = const Duration(seconds: 2);
+
   FileManager({
     required this.client,
     required this.davClient,
     required this.onUpdate,
   });
+
+  void _scheduleSave() {
+    if (_saveTimer != null && _saveTimer!.isActive) {
+      return;
+    }
+
+    _saveTimer?.cancel();
+    _saveTimer = Timer(_saveDelay, () {
+      _performSave();
+    });
+  }
 
   Future<List<File>> _fetchFolderTree(String path) async {
     print("Fetching folder tree for path: $path");
@@ -35,6 +53,7 @@ class FileManager {
   Future<void> fetchFolderTree(
     String path, {
     bool autoFetchThumbnails = true,
+    int depth = 1,
   }) async {
     final tree = await _fetchFolderTree(path);
     tree.sort((a, b) {
@@ -48,6 +67,18 @@ class FileManager {
     });
     trees[path] = tree;
     onUpdate();
+    _scheduleSave();
+    if (depth > 1) {
+      for (final f in tree) {
+        if (f.isDir == true) {
+          fetchFolderTree(
+            f.path!,
+            autoFetchThumbnails: autoFetchThumbnails,
+            depth: depth - 1,
+          );
+        }
+      }
+    }
     if (autoFetchThumbnails) {
       tree.forEach((f) {
         if (f.path != null && f.isDir == false) {
@@ -128,6 +159,7 @@ class FileManager {
   void pushPath(String segment, {bool autoFetch = true}) {
     path.add(segment);
     onUpdate();
+    _scheduleSave();
     if (autoFetch) {
       fetchFolderTree(getPathString());
     }
@@ -142,8 +174,44 @@ class FileManager {
       }
     }
     onUpdate();
+    _scheduleSave();
     if (autoFetch) {
       fetchFolderTree(getPathString());
     }
+  }
+
+  void _performSave() {
+    final json = toJson();
+    print("Saving FileManager state... ${jsonEncode(json)}");
+    setStringPref("fm", jsonEncode(json));
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'path': path,
+      'trees': trees.map(
+        (key, value) =>
+            MapEntry(key, value.map((f) => davFile2Json(f)).toList()),
+      ),
+    };
+  }
+
+  FileManager.fromJson(
+    Map<String, dynamic> json, {
+    required this.client,
+    required this.davClient,
+    required this.onUpdate,
+  }) {
+    path = List<String>.from(json['path']);
+    trees = (json['trees'] as Map<String, dynamic>).map(
+      (key, value) => MapEntry(
+        key,
+        (value as List<dynamic>).map((value) => json2DavFile(value)).toList(),
+      ),
+    );
+  }
+
+  void dispose() {
+    _performSave();
   }
 }

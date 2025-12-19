@@ -129,6 +129,22 @@ class _DefaultPageState extends State<DefaultPage> {
         }
       }
     });
+    getStringPref("fm").then((fmJson) {
+      if (fmJson != null) {
+        try {
+          final decodedJson = jsonDecode(fmJson);
+          print("Loading FileManager state: $decodedJson");
+          _fm = FileManager.fromJson(
+            decodedJson,
+            davClient: widget.davClient,
+            client: widget.client,
+            onUpdate: _onFUpdate,
+          );
+        } catch (e) {
+          print("Failed to load FileManager state: $e");
+        }
+      }
+    });
     _dm = DownloadManager(onBatchUpdate: _onDBatchUpdate);
     _um = UploadManager(onBatchUpdate: _onUBatchUpdate);
     _fm = FileManager(
@@ -143,6 +159,7 @@ class _DefaultPageState extends State<DefaultPage> {
   void dispose() {
     _dm.dispose();
     _um.dispose();
+    _fm.dispose();
     super.dispose();
   }
 

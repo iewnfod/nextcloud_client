@@ -199,16 +199,7 @@ class DownloadItem {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'davFile': {
-        'cTime': davFile.cTime?.toIso8601String(),
-        'eTag': davFile.eTag,
-        'name': davFile.name,
-        'path': davFile.path,
-        'size': davFile.size,
-        'isDir': davFile.isDir,
-        'mTime': davFile.mTime?.toIso8601String(),
-        'mimeType': davFile.mimeType,
-      },
+      'davFile': davFile2Json(davFile),
       'savePath': savePath,
       'status': status.name,
       'progress': progress,
@@ -218,20 +209,7 @@ class DownloadItem {
   }
 
   DownloadItem.fromJson(Map<String, dynamic> json, {required this.onUpdate})
-    : davFile = File(
-        cTime: json['davFile']['cTime'] != null
-            ? DateTime.parse(json['davFile']['cTime'] as String)
-            : null,
-        eTag: json['davFile']['eTag'] as String?,
-        name: json['davFile']['name'] as String?,
-        path: json['davFile']['path'] as String?,
-        size: json['davFile']['size'] as int?,
-        isDir: json['davFile']['isDir'] as bool?,
-        mTime: json['davFile']['mTime'] != null
-            ? DateTime.parse(json['davFile']['mTime'] as String)
-            : null,
-        mimeType: json['davFile']['mimeType'] as String?,
-      ),
+    : davFile = json2DavFile(json['davFile'] as Map<String, dynamic>),
       id = json['id'] as String,
       savePath = json['savePath'] as String,
       status = getDownloadStatusFromString(json['status'] as String),
